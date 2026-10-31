@@ -70,26 +70,12 @@ type Linter struct {
 	PreviousOrigins      map[string]string
 }
 
-func OptionPairs() map[Directive]Directive {
-	return map[Directive]Directive{
-		OptionDomainCookieOnly:     OptionCookie,
-		OptionNoCookie:             OptionCookie,
-		OptionCookiePassThrough:    OptionCookie,
-		OptionHideEZproxy:          OptionNoHideEZproxy,
-		OptionNoHttpsHyphens:       OptionHttpsHyphens,
-		OptionMetaEZproxyRewriting: OptionNoMetaEZproxyRewriting,
-		OptionProxyFTP:             OptionNoProxyFTP,
-		OptionUTF16:                OptionNoUTF16,
-		OptionXForwardedFor:        OptionNoXForwardedFor,
-	}
-}
-
 func OpenerOptions() []Directive {
-	return slices.Collect(maps.Keys(OptionPairs()))
+	return slices.Collect(maps.Keys(optionPairs))
 }
 
 func CloserOptions() []Directive {
-	return slices.Collect(maps.Values(OptionPairs()))
+	return slices.Collect(maps.Values(optionPairs))
 }
 
 var (
@@ -211,9 +197,6 @@ func (l *Linter) ProcessFile(filePath string) (warningCount int, err error) {
 }
 
 func (l *Linter) ProcessLineAt(line, at string) (m []string) {
-	// Get the OptionPairs which need to be closed.
-	optionPairs := OptionPairs()
-
 	// Initialize maps if they are still nil.
 	if l.PreviousTitles == nil {
 		l.PreviousTitles = make(map[string]string)
@@ -344,11 +327,8 @@ func (l *Linter) ProcessLineAt(line, at string) (m []string) {
 	if directive == OptionCookie && l.State.Title == "" {
 		returnEarly := true
 
-		// This is not very efficient, but hopefully this is not a hot path.
-		opprs := OptionPairs()
-
 		for _, v := range l.State.OpenOptions {
-			if opprs[v] == OptionCookie {
+			if optionPairs[v] == OptionCookie {
 				returnEarly = false
 				break
 			}
@@ -400,7 +380,6 @@ func (l *Linter) ProcessOptionOpener(line string) (m []string) {
 
 // ProcessOptionCloser processes the line containing an Option which closes an 'Opener' option.
 func (l *Linter) ProcessOptionCloser(line string) (m []string) {
-	optionPairs := OptionPairs()
 	if _, ok := optionCloserPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("%q directive is out of order, previous directive: %q (L1006)", l.State.Current, l.State.Previous))
 	}
