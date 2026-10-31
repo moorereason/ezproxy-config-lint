@@ -5,9 +5,13 @@
 package linter
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLineEndingInSpace(t *testing.T) {
@@ -271,6 +275,75 @@ func TestUnclosedOptionDirectives(t *testing.T) {
 		messages := tt.linter.ProcessLineAt("", "test:1")
 		if !reflect.DeepEqual(messages, tt.expected) {
 			t.Fatalf("incorrect messages %q instead of %q", messages, tt.expected)
+		}
+	}
+}
+
+func TestOCLCClientRefusesCrossHostRedirect(t *testing.T) {
+	var secretHits int
+	secret := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		secretHits++
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(secret.Close)
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, secret.URL+"/secret", http.StatusFound)
+	}))
+	t.Cleanup(redirector.Close)
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+
+	following := &http.Client{Transport: transport, Timeout: time.Second}
+	followed, err := following.Get(redirector.URL)
+	if err != nil {
+		t.Fatalf("default redirect policy: %v", err)
+	}
+	followed.Body.Close()
+	if secretHits != 1 {
+		t.Fatalf("default client contacted the other host %d times, want 1", secretHits)
+	}
+
+	secretHits = 0
+	oclc := newOCLCClient()
+	oclc.Transport = transport
+	refused, err := oclc.Get(redirector.URL)
+	if refused != nil {
+		refused.Body.Close()
+	}
+	if err == nil {
+		t.Fatal("oclc client followed a redirect off help.oclc.org")
+	}
+	if secretHits != 0 {
+		t.Fatalf("oclc client contacted the other host %d times", secretHits)
+	}
+	if !strings.Contains(err.Error(), "refusing source redirect") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRefuseNonOCLCRedirect(t *testing.T) {
+	via := []*http.Request{{URL: &url.URL{Scheme: "https", Host: "help.oclc.org"}}}
+	allowed := &http.Request{URL: &url.URL{Scheme: "https", Host: "help.oclc.org", Path: "/next"}}
+	if err := refuseNonOCLCRedirect(allowed, via); err != nil {
+		t.Fatalf("same-host https redirect was refused: %v", err)
+	}
+
+	cases := []string{
+		"http://127.0.0.1/latest/meta-data",
+		"http://help.oclc.org/page",
+		"https://help.oclc.org.evil.com/page",
+		"https://help.oclc.org:8443/page",
+		"https://alice:s3cret@help.oclc.org/page",
+	}
+	for _, raw := range cases {
+		parsed, err := url.Parse(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := refuseNonOCLCRedirect(&http.Request{URL: parsed}, via); err == nil {
+			t.Fatalf("redirect to %s was allowed", raw)
 		}
 	}
 }

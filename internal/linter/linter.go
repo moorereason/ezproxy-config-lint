@@ -836,6 +836,43 @@ func newScanner(r io.Reader) *bufio.Scanner {
 	return scanner
 }
 
+// validateOCLCSourceURL reports whether u is an https URL for help.oclc.org with no userinfo.
+// Host must be exactly help.oclc.org, so an explicit port is rejected.
+func validateOCLCSourceURL(u *url.URL) error {
+	if u == nil {
+		return errors.New("source line is malformed")
+	}
+	if u.User != nil {
+		return errors.New("source line must not include userinfo")
+	}
+	if u.Scheme != "https" {
+		return errors.New("source line isn't using https")
+	}
+	if u.Host != "help.oclc.org" {
+		return errors.New("source line isn't pointing to OCLC")
+	}
+	return nil
+}
+
+// refuseNonOCLCRedirect is a CheckRedirect policy. Every hop must stay on the OCLC source URL.
+func refuseNonOCLCRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if err := validateOCLCSourceURL(req.URL); err != nil {
+		return fmt.Errorf("refusing source redirect: %w", err)
+	}
+	return nil
+}
+
+// newOCLCClient fetches Source URLs and refuses redirects that leave https://help.oclc.org.
+func newOCLCClient() *http.Client {
+	return &http.Client{
+		Timeout:       OCLCHTTPTimeout,
+		CheckRedirect: refuseNonOCLCRedirect,
+	}
+}
+
 func processSourceLine(sourceLine string) (string, string, error) {
 	oclcTitle := ""
 	splitSourceLine := strings.Split(sourceLine, " ")
@@ -847,20 +884,18 @@ func processSourceLine(sourceLine string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	if parsedSourceURL.Scheme != "https" {
-		return "", "", errors.New("source line isn't using https")
-	}
-	if parsedSourceURL.Host != "help.oclc.org" {
-		return "", "", errors.New("source line isn't pointing to OCLC")
+	if err := validateOCLCSourceURL(parsedSourceURL); err != nil {
+		return "", "", err
 	}
 	// Make a GET request, waiting no more than 10 second for the results.
+	// Redirects are checked again so a Location header cannot leave help.oclc.org.
 	ctx, cancel := context.WithTimeout(context.Background(), OCLCHTTPTimeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsedSourceURL.String(), nil)
 	if err != nil {
 		return "", "", err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := newOCLCClient().Do(req)
 	if err != nil {
 		return "", "", err
 	}
