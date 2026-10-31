@@ -183,10 +183,19 @@ var optionCloserPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	URL:              {},
 }
 
+// openerDirectives is the set of Option directives that open a pair.
+// It is filled from OptionPairs in init.
+var openerDirectives = map[Directive]struct{}{} //nolint:gochecknoglobals
+
+// closerDirectives is the set of Option directives that close a pair.
+// It is filled from OptionPairs in init.
+var closerDirectives = map[Directive]struct{}{} //nolint:gochecknoglobals
+
 func init() {
 	for _, opener := range OpenerOptions() {
 		addUserHeaderPrevious[opener] = struct{}{}
 		anonymousURLPrevious[opener] = struct{}{}
+		openerDirectives[opener] = struct{}{}
 		optionOpenerPrevious[opener] = struct{}{}
 		proxyHostnameEditPrevious[opener] = struct{}{}
 		titlePrevious[opener] = struct{}{}
@@ -194,6 +203,7 @@ func init() {
 	for _, closer := range CloserOptions() {
 		addUserHeaderBarePrevious[closer] = struct{}{}
 		anonymousURLStarPrevious[closer] = struct{}{}
+		closerDirectives[closer] = struct{}{}
 		optionCloserPrevious[closer] = struct{}{}
 	}
 }

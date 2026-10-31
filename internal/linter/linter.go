@@ -213,8 +213,6 @@ func (l *Linter) ProcessFile(filePath string) (warningCount int, err error) {
 func (l *Linter) ProcessLineAt(line, at string) (m []string) {
 	// Get the OptionPairs which need to be closed.
 	optionPairs := OptionPairs()
-	openers := OpenerOptions()
-	closers := CloserOptions()
 
 	// Initialize maps if they are still nil.
 	if l.PreviousTitles == nil {
@@ -362,9 +360,9 @@ func (l *Linter) ProcessLineAt(line, at string) (m []string) {
 	}
 
 	// Process Option Pair directives.
-	if slices.Contains(openers, directive) {
+	if _, ok := openerDirectives[directive]; ok {
 		m = append(m, l.ProcessOptionOpener(line)...)
-	} else if slices.Contains(closers, directive) {
+	} else if _, ok := closerDirectives[directive]; ok {
 		m = append(m, l.ProcessOptionCloser(line)...)
 	}
 
