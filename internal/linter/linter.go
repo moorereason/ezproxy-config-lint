@@ -393,28 +393,7 @@ func (l *Linter) ProcessLineAt(line, at string) (m []string) {
 
 // ProcessOptionOpener processes the line containing an Option which will need to be closed later.
 func (l *Linter) ProcessOptionOpener(line string) (m []string) {
-	allowedPreviousDirectives := []Directive{
-		Undefined,
-		Group,
-		DbVar,
-		DbVar0,
-		DbVar1,
-		DbVar2,
-		DbVar3,
-		DbVar4,
-		DbVar5,
-		DbVar6,
-		DbVar7,
-		DbVar8,
-		DbVar9,
-		HTTPMethod,
-		ProxyHostnameEdit,
-		AddUserHeader,
-		AnonymousURL,
-		OptionCookie,
-	}
-	allowedPreviousDirectives = append(allowedPreviousDirectives, OpenerOptions()...)
-	if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+	if _, ok := optionOpenerPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("%q directive is out of order, previous directive: %q (L1005)", l.State.Current, l.State.Previous))
 	}
 	l.State.OpenOptions = append(l.State.OpenOptions, l.State.Current)
@@ -424,20 +403,7 @@ func (l *Linter) ProcessOptionOpener(line string) (m []string) {
 // ProcessOptionCloser processes the line containing an Option which closes an 'Opener' option.
 func (l *Linter) ProcessOptionCloser(line string) (m []string) {
 	optionPairs := OptionPairs()
-	allowedPreviousDirectives := []Directive{
-		DbVar,
-		URL,
-		Host,
-		HostJavaScript,
-		Domain,
-		DomainJavaScript,
-		Replace,
-		AddUserHeader,
-		AnonymousURL,
-		NeverProxy,
-	}
-	allowedPreviousDirectives = append(allowedPreviousDirectives, CloserOptions()...)
-	if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+	if _, ok := optionCloserPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("%q directive is out of order, previous directive: %q (L1006)", l.State.Current, l.State.Previous))
 	}
 	l.State.OpenOptions = slices.DeleteFunc(l.State.OpenOptions, func(d Directive) bool {
@@ -450,29 +416,7 @@ func (l *Linter) ProcessOptionCloser(line string) (m []string) {
 // OCLC documentation:
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/ProxyHostnameEdit
 func (l *Linter) ProcessProxyHostnameEdit(line string) (m []string) {
-	allowedPreviousDirectives := []Directive{
-		Undefined,
-		Group,
-		HTTPMethod,
-		Cookie,
-		DbVar,
-		DbVar0,
-		DbVar1,
-		DbVar2,
-		DbVar3,
-		DbVar4,
-		DbVar5,
-		DbVar6,
-		DbVar7,
-		DbVar8,
-		DbVar9,
-		AddUserHeader,
-		AnonymousURL,
-		OptionCookie,
-		ProxyHostnameEdit,
-	}
-	allowedPreviousDirectives = append(allowedPreviousDirectives, OpenerOptions()...)
-	if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+	if _, ok := proxyHostnameEditPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"ProxyHostnameEdit\" directive is out of order, previous directive: %q (L1008)", l.State.Previous))
 	}
 
@@ -511,45 +455,12 @@ func (l *Linter) ProcessProxyHostnameEdit(line string) (m []string) {
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/AddUserHeader
 func (l *Linter) ProcessAddUserHeader(line string) (m []string) {
 	if TrimLabel(line, l.State.Label) == "" {
-		allowedPreviousDirectives := []Directive{
-			URL,
-			Host,
-			HostJavaScript,
-			Domain,
-			DomainJavaScript,
-			Replace,
-			AnonymousURL,
-			NeverProxy,
-		}
-		allowedPreviousDirectives = append(allowedPreviousDirectives, CloserOptions()...)
-		if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+		if _, ok := addUserHeaderBarePrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AddUserHeader\" directive with no qualifiers is out of order, previous directive: %q (L1011)", l.State.Previous))
 		}
 		l.State.AddUserHeaderNeedsClosing = false
 	} else {
-		allowedPreviousDirectives := []Directive{
-			Undefined,
-			Group,
-			HTTPMethod,
-			Cookie,
-			DbVar,
-			DbVar0,
-			DbVar1,
-			DbVar2,
-			DbVar3,
-			DbVar4,
-			DbVar5,
-			DbVar6,
-			DbVar7,
-			DbVar8,
-			DbVar9,
-			AddUserHeader,
-			AnonymousURL,
-			OptionCookie,
-			ProxyHostnameEdit,
-		}
-		allowedPreviousDirectives = append(allowedPreviousDirectives, OpenerOptions()...)
-		if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+		if _, ok := addUserHeaderPrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AddUserHeader\" directive is out of order, previous directive: %q (L1012)", l.State.Previous))
 		}
 		l.State.AddUserHeaderNeedsClosing = true
@@ -562,44 +473,12 @@ func (l *Linter) ProcessAddUserHeader(line string) (m []string) {
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/AnonymousURL
 func (l *Linter) ProcessAnonymousURL(line string) (m []string) {
 	if TrimLabel(line, l.State.Label) == "-*" {
-		allowedPreviousDirectives := []Directive{
-			URL,
-			Host,
-			HostJavaScript,
-			Domain,
-			DomainJavaScript,
-			Replace,
-			AddUserHeader,
-			NeverProxy,
-		}
-		allowedPreviousDirectives = append(allowedPreviousDirectives, CloserOptions()...)
-		if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+		if _, ok := anonymousURLStarPrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AnonymousURL -*\" directive is out of order, previous directive: %q (L1003)", l.State.Previous))
 		}
 		l.State.AnonymousURLNeedsClosing = false
 	} else {
-		allowedPreviousDirectives := []Directive{
-			Undefined,
-			Group,
-			HTTPMethod,
-			Cookie,
-			DbVar,
-			DbVar0,
-			DbVar1,
-			DbVar2,
-			DbVar3,
-			DbVar4,
-			DbVar5,
-			DbVar6,
-			DbVar7,
-			DbVar8,
-			DbVar9,
-			AddUserHeader,
-			AnonymousURL,
-			ProxyHostnameEdit,
-		}
-		allowedPreviousDirectives = append(allowedPreviousDirectives, OpenerOptions()...)
-		if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+		if _, ok := anonymousURLPrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AnonymousURL\" directive is out of order, previous directive: %q (L1004)", l.State.Previous))
 		}
 		l.State.AnonymousURLNeedsClosing = true
@@ -611,31 +490,7 @@ func (l *Linter) ProcessAnonymousURL(line string) (m []string) {
 // OCLC documentation:
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/Title
 func (l *Linter) ProcessTitle(line, at string) (m []string) {
-	allowedPreviousDirectives := []Directive{
-		Undefined,
-		Group,
-		HTTPMethod,
-		AddUserHeader,
-		AnonymousURL,
-		ProxyHostnameEdit,
-		Referer,
-		Cookie,
-		DbVar,
-		DbVar0,
-		DbVar1,
-		DbVar2,
-		DbVar3,
-		DbVar4,
-		DbVar5,
-		DbVar6,
-		DbVar7,
-		DbVar8,
-		DbVar9,
-		OptionEbraryUnencodedTokens,
-		OptionCookie,
-	}
-	allowedPreviousDirectives = append(allowedPreviousDirectives, OpenerOptions()...)
-	if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+	if _, ok := titlePrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"Title\" directive is out of order, previous directive: %q (L1001)", l.State.Previous))
 	}
 	// If the previous AnonymousURL directive was `AnonymousURL -*`, that's a problem.
@@ -665,11 +520,7 @@ func (l *Linter) ProcessTitle(line, at string) (m []string) {
 // OCLC documention:
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/Description
 func (l *Linter) ProcessDescription(line, at string) (m []string) {
-	allowedPreviousDirectives := []Directive{
-		Title,
-		Description,
-	}
-	if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+	if _, ok := descriptionPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"Description\" directive is out of order, previous directive: %q (L1013)", l.State.Previous))
 	}
 
@@ -740,18 +591,7 @@ func (l *Linter) ProcessDomainAndDomainJavaScript(line string) (m []string) {
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/URL_version_2
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/URL_version_3
 func (l *Linter) ProcessURL(line, at string) (m []string) {
-	allowedPreviousDirectives := []Directive{
-		AllowVars,
-		ByteServe,
-		Description,
-		EBLSecret,
-		EbrarySite,
-		EncryptVar,
-		HTTPHeader,
-		MimeFilter,
-		Title,
-	}
-	if !slices.Contains(allowedPreviousDirectives, l.State.Previous) {
+	if _, ok := urlPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"URL\" directive is out of order, previous directive: %q (L1002)", l.State.Previous))
 	}
 
