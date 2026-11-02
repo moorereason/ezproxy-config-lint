@@ -371,7 +371,7 @@ func (l *Linter) ProcessLineAt(line, at string) (m []string) {
 
 // ProcessOptionOpener processes the line containing an Option which will need to be closed later.
 func (l *Linter) ProcessOptionOpener(line string) (m []string) {
-	if _, ok := optionOpenerPrevious[l.State.Previous]; !ok {
+	if _, ok := optionOpenerAllowedPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("%q directive is out of order, previous directive: %q (L1005)", l.State.Current, l.State.Previous))
 	}
 	l.State.OpenOptions = append(l.State.OpenOptions, l.State.Current)
@@ -380,7 +380,7 @@ func (l *Linter) ProcessOptionOpener(line string) (m []string) {
 
 // ProcessOptionCloser processes the line containing an Option which closes an 'Opener' option.
 func (l *Linter) ProcessOptionCloser(line string) (m []string) {
-	if _, ok := optionCloserPrevious[l.State.Previous]; !ok {
+	if _, ok := optionCloserAllowedPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("%q directive is out of order, previous directive: %q (L1006)", l.State.Current, l.State.Previous))
 	}
 	l.State.OpenOptions = slices.DeleteFunc(l.State.OpenOptions, func(d Directive) bool {
@@ -393,7 +393,7 @@ func (l *Linter) ProcessOptionCloser(line string) (m []string) {
 // OCLC documentation:
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/ProxyHostnameEdit
 func (l *Linter) ProcessProxyHostnameEdit(line string) (m []string) {
-	if _, ok := proxyHostnameEditPrevious[l.State.Previous]; !ok {
+	if _, ok := proxyHostnameEditAllowedPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"ProxyHostnameEdit\" directive is out of order, previous directive: %q (L1008)", l.State.Previous))
 	}
 
@@ -432,12 +432,12 @@ func (l *Linter) ProcessProxyHostnameEdit(line string) (m []string) {
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/AddUserHeader
 func (l *Linter) ProcessAddUserHeader(line string) (m []string) {
 	if TrimLabel(line, l.State.Label) == "" {
-		if _, ok := addUserHeaderBarePrevious[l.State.Previous]; !ok {
+		if _, ok := addUserHeaderBareAllowedPrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AddUserHeader\" directive with no qualifiers is out of order, previous directive: %q (L1011)", l.State.Previous))
 		}
 		l.State.AddUserHeaderNeedsClosing = false
 	} else {
-		if _, ok := addUserHeaderPrevious[l.State.Previous]; !ok {
+		if _, ok := addUserHeaderAllowedPrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AddUserHeader\" directive is out of order, previous directive: %q (L1012)", l.State.Previous))
 		}
 		l.State.AddUserHeaderNeedsClosing = true
@@ -450,12 +450,12 @@ func (l *Linter) ProcessAddUserHeader(line string) (m []string) {
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/AnonymousURL
 func (l *Linter) ProcessAnonymousURL(line string) (m []string) {
 	if TrimLabel(line, l.State.Label) == "-*" {
-		if _, ok := anonymousURLStarPrevious[l.State.Previous]; !ok {
+		if _, ok := anonymousURLStarAllowedPrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AnonymousURL -*\" directive is out of order, previous directive: %q (L1003)", l.State.Previous))
 		}
 		l.State.AnonymousURLNeedsClosing = false
 	} else {
-		if _, ok := anonymousURLPrevious[l.State.Previous]; !ok {
+		if _, ok := anonymousURLAllowedPrevious[l.State.Previous]; !ok {
 			m = append(m, fmt.Sprintf("\"AnonymousURL\" directive is out of order, previous directive: %q (L1004)", l.State.Previous))
 		}
 		l.State.AnonymousURLNeedsClosing = true
@@ -467,7 +467,7 @@ func (l *Linter) ProcessAnonymousURL(line string) (m []string) {
 // OCLC documentation:
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/Title
 func (l *Linter) ProcessTitle(line, at string) (m []string) {
-	if _, ok := titlePrevious[l.State.Previous]; !ok {
+	if _, ok := titleAllowedPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"Title\" directive is out of order, previous directive: %q (L1001)", l.State.Previous))
 	}
 	// If the previous AnonymousURL directive was `AnonymousURL -*`, that's a problem.
@@ -497,7 +497,7 @@ func (l *Linter) ProcessTitle(line, at string) (m []string) {
 // OCLC documention:
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/Description
 func (l *Linter) ProcessDescription(line, at string) (m []string) {
-	if _, ok := descriptionPrevious[l.State.Previous]; !ok {
+	if _, ok := descriptionAllowedPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"Description\" directive is out of order, previous directive: %q (L1013)", l.State.Previous))
 	}
 
@@ -568,7 +568,7 @@ func (l *Linter) ProcessDomainAndDomainJavaScript(line string) (m []string) {
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/URL_version_2
 // https://help.oclc.org/Library_Management/EZproxy/Configure_resources/URL_version_3
 func (l *Linter) ProcessURL(line, at string) (m []string) {
-	if _, ok := urlPrevious[l.State.Previous]; !ok {
+	if _, ok := urlAllowedPrevious[l.State.Previous]; !ok {
 		m = append(m, fmt.Sprintf("\"URL\" directive is out of order, previous directive: %q (L1002)", l.State.Previous))
 	}
 

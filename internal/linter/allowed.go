@@ -16,9 +16,9 @@ var optionPairs = map[Directive]Directive{ //nolint:gochecknoglobals
 	OptionXForwardedFor:        OptionNoXForwardedFor,
 }
 
-// titlePrevious is the set of directives that may appear immediately before Title.
+// titleAllowedPrevious is the set of directives that may appear immediately before Title.
 // It is built once. Openers are added from optionPairs in init.
-var titlePrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var titleAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AddUserHeader:               {},
 	AnonymousURL:                {},
 	Cookie:                      {},
@@ -42,15 +42,15 @@ var titlePrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	Undefined:                   {},
 }
 
-// descriptionPrevious is the set of directives that may appear immediately before Description.
-var descriptionPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+// descriptionAllowedPrevious is the set of directives that may appear immediately before Description.
+var descriptionAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	Description: {},
 	Title:       {},
 }
 
-// proxyHostnameEditPrevious is the set of directives that may appear immediately before ProxyHostnameEdit.
+// proxyHostnameEditAllowedPrevious is the set of directives that may appear immediately before ProxyHostnameEdit.
 // Openers are added from optionPairs in init.
-var proxyHostnameEditPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var proxyHostnameEditAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AddUserHeader:     {},
 	AnonymousURL:      {},
 	Cookie:            {},
@@ -72,8 +72,8 @@ var proxyHostnameEditPrevious = map[Directive]struct{}{ //nolint:gochecknoglobal
 	Undefined:         {},
 }
 
-// urlPrevious is the set of directives that may appear immediately before URL.
-var urlPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+// urlAllowedPrevious is the set of directives that may appear immediately before URL.
+var urlAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AllowVars:   {},
 	ByteServe:   {},
 	Description: {},
@@ -85,9 +85,9 @@ var urlPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	Title:       {},
 }
 
-// optionOpenerPrevious is the set of directives that may appear immediately before an opening Option.
+// optionOpenerAllowedPrevious is the set of directives that may appear immediately before an opening Option.
 // Openers are added from optionPairs in init.
-var optionOpenerPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var optionOpenerAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AddUserHeader:     {},
 	AnonymousURL:      {},
 	DbVar:             {},
@@ -108,9 +108,9 @@ var optionOpenerPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	Undefined:         {},
 }
 
-// addUserHeaderPrevious is the set of directives that may appear immediately before AddUserHeader with qualifiers.
+// addUserHeaderAllowedPrevious is the set of directives that may appear immediately before AddUserHeader with qualifiers.
 // Openers are added from optionPairs in init.
-var addUserHeaderPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var addUserHeaderAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AddUserHeader:     {},
 	AnonymousURL:      {},
 	Cookie:            {},
@@ -132,9 +132,9 @@ var addUserHeaderPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	Undefined:         {},
 }
 
-// addUserHeaderBarePrevious is the set of directives that may appear immediately before AddUserHeader with no qualifiers.
+// addUserHeaderBareAllowedPrevious is the set of directives that may appear immediately before AddUserHeader with no qualifiers.
 // Closers are added from optionPairs in init.
-var addUserHeaderBarePrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var addUserHeaderBareAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AnonymousURL:     {},
 	Domain:           {},
 	DomainJavaScript: {},
@@ -145,9 +145,9 @@ var addUserHeaderBarePrevious = map[Directive]struct{}{ //nolint:gochecknoglobal
 	URL:              {},
 }
 
-// anonymousURLPrevious is the set of directives that may appear immediately before AnonymousURL.
+// anonymousURLAllowedPrevious is the set of directives that may appear immediately before AnonymousURL.
 // Openers are added from optionPairs in init.
-var anonymousURLPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var anonymousURLAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AddUserHeader:     {},
 	AnonymousURL:      {},
 	Cookie:            {},
@@ -168,9 +168,9 @@ var anonymousURLPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	Undefined:         {},
 }
 
-// anonymousURLStarPrevious is the set of directives that may appear immediately before "AnonymousURL -*".
+// anonymousURLStarAllowedPrevious is the set of directives that may appear immediately before "AnonymousURL -*".
 // Closers are added from optionPairs in init.
-var anonymousURLStarPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var anonymousURLStarAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AddUserHeader:    {},
 	Domain:           {},
 	DomainJavaScript: {},
@@ -181,9 +181,9 @@ var anonymousURLStarPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	URL:              {},
 }
 
-// optionCloserPrevious is the set of directives that may appear immediately before a closing Option.
+// optionCloserAllowedPrevious is the set of directives that may appear immediately before a closing Option.
 // Closers are added from optionPairs in init.
-var optionCloserPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
+var optionCloserAllowedPrevious = map[Directive]struct{}{ //nolint:gochecknoglobals
 	AddUserHeader:    {},
 	AnonymousURL:     {},
 	DbVar:            {},
@@ -206,17 +206,19 @@ var closerDirectives = map[Directive]struct{}{} //nolint:gochecknoglobals
 
 func init() {
 	for _, opener := range OpenerOptions() {
-		addUserHeaderPrevious[opener] = struct{}{}
-		anonymousURLPrevious[opener] = struct{}{}
 		openerDirectives[opener] = struct{}{}
-		optionOpenerPrevious[opener] = struct{}{}
-		proxyHostnameEditPrevious[opener] = struct{}{}
-		titlePrevious[opener] = struct{}{}
+
+		addUserHeaderAllowedPrevious[opener] = struct{}{}
+		anonymousURLAllowedPrevious[opener] = struct{}{}
+		optionOpenerAllowedPrevious[opener] = struct{}{}
+		proxyHostnameEditAllowedPrevious[opener] = struct{}{}
+		titleAllowedPrevious[opener] = struct{}{}
 	}
 	for _, closer := range CloserOptions() {
-		addUserHeaderBarePrevious[closer] = struct{}{}
-		anonymousURLStarPrevious[closer] = struct{}{}
 		closerDirectives[closer] = struct{}{}
-		optionCloserPrevious[closer] = struct{}{}
+
+		addUserHeaderBareAllowedPrevious[closer] = struct{}{}
+		anonymousURLStarAllowedPrevious[closer] = struct{}{}
+		optionCloserAllowedPrevious[closer] = struct{}{}
 	}
 }
